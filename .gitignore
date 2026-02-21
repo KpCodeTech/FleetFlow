@@ -1,0 +1,93 @@
+# =========================
+# GLOBAL (Sabke liye)
+# =========================
+node_modules/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# SECURITY (Ye galti se bhi mat bhejna)
+# =========================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+*.keystore
+*.jks
+
+# =========================
+# 🐍 AI ENGINE (Python/FastAPI)
+# =========================
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Bytecode (Compiled python)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / Builds
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# =========================
+# ⚛️ FRONTEND WEB (React/Vite)
+# =========================
+# Build Output
+frontend-web/dist/
+frontend-web/build/
+frontend-web/.eslintcache
+
+# =========================
+# 📱 MOBILE APP (React Native / Expo)
+# =========================
+.expo/
+mobile-app/.expo/
+mobile-app/web-build/
+mobile-app/dist/
+
+# Native Builds (Agar future mein generate hue to)
+mobile-app/android/app/build/
+mobile-app/ios/Pods/
+mobile-app/ios/build/
+
+# =========================
+# 🔙 BACKEND GATEWAY (Node.js)
+# =========================
+backend-gateway/uploads/
+
+# =========================
+# 🎥 MEDIA & UPLOADS (Heavy Files)
+# =========================
+# Ignore all heavy files inside the audio and uploads directories
+ai-engine/static/audio/*
+ai-engine/static/uploads/*
+
+# Exception: Keep the empty folders tracked by Git (via .gitkeep)
+!ai-engine/static/audio/.gitkeep
+!ai-engine/static/uploads/.gitkeep
