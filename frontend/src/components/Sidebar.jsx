@@ -1,23 +1,24 @@
+
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Truck, Users, Route, Send,
-  Wrench, BarChart3, LogOut, Zap, Fuel,
+  Wrench, BarChart3, LogOut, Fuel,
 } from 'lucide-react';
 
 const ALL_NAV_ITEMS = [
-  { to: '/',            label: 'Dashboard',   icon: LayoutDashboard, end: true,  roles: ['MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCE'] },
-  { to: '/vehicles',    label: 'Vehicles',    icon: Truck,                        roles: ['MANAGER', 'DISPATCHER', 'SAFETY_OFFICER'] },
-  { to: '/drivers',     label: 'Drivers',     icon: Users,                        roles: ['MANAGER', 'DISPATCHER', 'SAFETY_OFFICER'] },
-  { to: '/trips',       label: 'Trips',       icon: Route,                        roles: ['MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCE'] },
-  { to: '/dispatch',    label: 'Dispatch',    icon: Send,                         roles: ['MANAGER', 'DISPATCHER'] },
-  { to: '/maintenance', label: 'Maintenance', icon: Wrench,                       roles: ['MANAGER'] },
-  { to: '/expenses',    label: 'Fuel & Costs',icon: Fuel,                         roles: ['MANAGER', 'DISPATCHER', 'FINANCE'] },
-  { to: '/analytics',   label: 'Analytics',   icon: BarChart3,                    roles: ['MANAGER', 'FINANCE'] },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true, roles: ['MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCE'] },
+  { to: '/vehicles', label: 'Vehicles', icon: Truck, roles: ['MANAGER', 'DISPATCHER', 'SAFETY_OFFICER'] },
+  { to: '/drivers', label: 'Drivers', icon: Users, roles: ['MANAGER', 'DISPATCHER', 'SAFETY_OFFICER'] },
+  { to: '/trips', label: 'Trips', icon: Route, roles: ['MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCE'] },
+  { to: '/dispatch', label: 'Dispatch', icon: Send, roles: ['MANAGER', 'DISPATCHER'] },
+  { to: '/maintenance', label: 'Maintenance', icon: Wrench, roles: ['MANAGER'] },
+  { to: '/expenses', label: 'Fuel & Costs', icon: Fuel, roles: ['MANAGER', 'DISPATCHER', 'FINANCE'] },
+  { to: '/analytics', label: 'Analytics', icon: BarChart3, roles: ['MANAGER', 'FINANCE'] },
 ];
 
 export default function Sidebar() {
-  const navigate  = useNavigate();
-  const user      = JSON.parse(localStorage.getItem('fleetflow_user') || '{}');
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('fleetflow_user') || '{}');
 
   const navItems = ALL_NAV_ITEMS
     .filter(item => item.roles.includes(user.role))
@@ -34,40 +35,27 @@ export default function Sidebar() {
     navigate('/login');
   };
 
-  const roleBadgeColor = {
-    MANAGER:        { bg: 'rgba(88,166,255,0.15)',  color: '#58a6ff'  },
-    DISPATCHER:     { bg: 'rgba(63,185,80,0.15)',   color: '#3fb950'  },
-    SAFETY_OFFICER: { bg: 'rgba(227,179,65,0.15)',  color: '#e3b341'  },
-    FINANCE:        { bg: 'rgba(188,140,255,0.15)', color: '#bc8cff'  },
+  const roleBadgeStyle = {
+    MANAGER: 'bg-[#58a6ff]/15 text-[#58a6ff]',
+    DISPATCHER: 'bg-[#3fb950]/15 text-[#3fb950]',
+    SAFETY_OFFICER: 'bg-[#e3b341]/15 text-[#e3b341]',
+    FINANCE: 'bg-[#bc8cff]/15 text-[#bc8cff]',
   };
-  const badge = roleBadgeColor[user.role] || { bg: 'var(--bg-surface)', color: 'var(--text-muted)' };
+  const badgeClass = roleBadgeStyle[user.role] || 'bg-[#161b22] text-[#484f58]';
 
   return (
-    <aside style={{
-      width: '240px',
-      minWidth: '240px',
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      backgroundColor: 'var(--bg-surface)',
-      borderRight: '1px solid var(--border)',
-      overflow: 'hidden',
-    }}>
+    <aside className="w-[240px] min-w-[240px] h-screen flex flex-col bg-[#161b22] border-r border-[#30363d] overflow-hidden">
       {/* Logo */}
-      <div style={{ padding: '1.25rem 1.25rem 1rem', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-          <div style={{
-            width: '32px', height: '32px', borderRadius: '8px',
-            background: 'linear-gradient(135deg, #58a6ff, #388bfd)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Zap size={18} color="#0d1117" strokeWidth={2.5} />
+      <div className="p-5 pb-4 border-b border-[#30363d]">
+        <div className="flex items-center gap-2.5">
+          <div className="flex w-[38px] h-[38px] rounded-[10px] bg-[#1a73e8] items-center justify-center shadow-[0_4px_10px_rgba(26,115,232,0.35)] shrink-0">
+            <Truck size={20} className="text-white" strokeWidth={2.5} />
           </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+            <div className="font-bold text-base text-[#e6edf3] tracking-tight">
               FleetFlow
             </div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+            <div className="text-[0.7rem] text-[#484f58] font-medium">
               Command Center
             </div>
           </div>
@@ -75,8 +63,8 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav style={{ flex: 1, padding: '0.75rem 0.625rem', overflowY: 'auto' }}>
-        <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 0.5rem 0.5rem' }}>
+      <nav className="flex-1 px-2.5 py-3 overflow-y-auto">
+        <div className="text-[0.7rem] font-semibold text-[#484f58] uppercase tracking-wider px-2 pb-2">
           Navigation
         </div>
         {navItems.map(({ to, label, icon: Icon, end }) => (
@@ -84,32 +72,12 @@ export default function Sidebar() {
             key={to}
             to={to}
             end={end}
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.625rem',
-              padding: '0.5625rem 0.75rem',
-              borderRadius: '0.5rem',
-              marginBottom: '0.125rem',
-              textDecoration: 'none',
-              fontSize: '0.875rem',
-              fontWeight: isActive ? 600 : 400,
-              color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
-              backgroundColor: isActive ? 'var(--accent-glow)' : 'transparent',
-              transition: 'all 0.15s',
-            })}
-            onMouseEnter={(e) => {
-              if (!e.currentTarget.getAttribute('aria-current')) {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!e.currentTarget.getAttribute('aria-current')) {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = 'var(--text-secondary)';
-              }
-            }}
+            className={({ isActive }) =>
+              `flex items-center gap-2.5 px-3 py-2.5 rounded-lg mb-0.5 no-underline text-sm transition-all duration-150 ` +
+              (isActive
+                ? `font-semibold text-[#58a6ff] bg-[rgba(88,166,255,0.15)]`
+                : `font-normal text-[#8b949e] hover:bg-[#21262d] hover:text-[#e6edf3]`)
+            }
           >
             <Icon size={17} strokeWidth={1.75} />
             {label}
@@ -118,42 +86,23 @@ export default function Sidebar() {
       </nav>
 
       {/* User Footer */}
-      <div style={{ padding: '0.875rem 1rem', borderTop: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.5rem' }}>
-          <div style={{
-            width: '32px', height: '32px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--purple), var(--accent))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.8rem', fontWeight: 700, color: '#fff',
-            flexShrink: 0,
-          }}>
+      <div className="px-4 py-3.5 border-t border-[#30363d]">
+        <div className="flex items-center gap-2.5 mb-2">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#bc8cff] to-[#58a6ff] flex items-center justify-center text-[0.8rem] font-bold text-white shrink-0">
             {user?.name?.charAt(0) || 'U'}
           </div>
-          <div style={{ overflow: 'hidden', flex: 1 }}>
-            <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div className="overflow-hidden flex-1">
+            <div className="text-[0.8125rem] font-semibold text-[#e6edf3] whitespace-nowrap overflow-hidden text-ellipsis">
               {user?.name || 'User'}
             </div>
-            <div style={{
-              display: 'inline-block', fontSize: '0.65rem', fontWeight: 600,
-              padding: '0.1rem 0.4rem', borderRadius: '4px', marginTop: '0.125rem',
-              background: badge.bg, color: badge.color,
-            }}>
+            <div className={`inline-block text-[0.65rem] font-semibold px-1.5 py-0.5 rounded mt-0.5 ${badgeClass}`}>
               {user?.role?.replace('_', ' ') || 'Guest'}
             </div>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '0.5rem',
-            width: '100%', padding: '0.4375rem 0.625rem',
-            backgroundColor: 'transparent', border: 'none',
-            color: 'var(--text-muted)', borderRadius: '0.375rem',
-            cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 500,
-            transition: 'all 0.15s',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--red-bg)'; e.currentTarget.style.color = 'var(--red)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          className="flex items-center gap-2 w-full px-2.5 py-1.5 bg-transparent border-none text-[#484f58] rounded-md cursor-pointer text-[0.8125rem] font-medium transition-all duration-150 hover:bg-[rgba(248,81,73,0.15)] hover:text-[#f85149]"
         >
           <LogOut size={15} />
           Sign Out

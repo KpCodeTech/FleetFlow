@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { ShieldAlert, RefreshCw, Star, Calendar, UserX, UserCheck, AlertCircle } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
@@ -7,7 +8,7 @@ export default function DriverProfiles() {
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   const user = JSON.parse(localStorage.getItem('fleetflow_user') || '{}');
   const isAuthorized = ['MANAGER', 'SAFETY_OFFICER'].includes(user.role);
   const isSafetyOfficer = user.role === 'SAFETY_OFFICER';
@@ -40,91 +41,89 @@ export default function DriverProfiles() {
 
   if (!isAuthorized) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
-        <ShieldAlert size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
-        <h2 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Access Forbidden</h2>
-        <p>Only Safety Officers and Managers can access driver safety profiles.</p>
+      <div className="flex flex-col items-center justify-center h-full text-gray-500">
+        <ShieldAlert size={48} className="mb-4 opacity-50" />
+        <h2 className="text-gray-900 mb-2 text-xl font-bold">Access Forbidden</h2>
+        <p className="text-sm">Only Safety Officers and Managers can access driver safety profiles.</p>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', height: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+    <div className="flex flex-col gap-5 h-full">
+      <div className="flex items-center justify-between shrink-0">
         <div>
-          <h2 className="page-title">Driver Performance & Safety Profiles</h2>
-          <p className="page-subtitle">Monitoring {drivers.length} drivers for compliance and safety</p>
+          <h2 className="text-2xl font-bold text-gray-900 tracking-tight m-0">Driver Performance & Safety Profiles</h2>
+          <p className="text-sm text-gray-500 mt-1 mb-0">Monitoring {drivers.length} drivers for compliance and safety</p>
         </div>
-        <button className="btn-ghost" onClick={load}><RefreshCw size={15} />Refresh</button>
+        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-lg transition-all text-sm shadow-sm cursor-pointer" onClick={load}>
+          <RefreshCw size={15} />
+          Refresh
+        </button>
       </div>
 
       {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', background: 'var(--red-bg)', color: 'var(--red)', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
+        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm font-medium">
           <AlertCircle size={16} /> {error}
         </div>
       )}
 
-      <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ overflowY: 'auto', flex: 1 }}>
+      <div className="flex-1 bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden flex flex-col min-h-0">
+        <div className="overflow-y-auto overflow-x-auto flex-1">
           {loading ? (
-            <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading drivers...</div>
+            <div className="p-12 text-center text-gray-500">Loading drivers...</div>
           ) : (
-            <table className="data-table">
+            <table className="w-full border-collapse text-left">
               <thead>
                 <tr>
-                  <th>Driver Name</th>
-                  <th>License Expiry</th>
-                  <th>Safety Score</th>
-                  <th>Completion Rate</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th className="sticky top-0 bg-white z-10 px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 whitespace-nowrap">Driver Name</th>
+                  <th className="sticky top-0 bg-white z-10 px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 whitespace-nowrap">License Expiry</th>
+                  <th className="sticky top-0 bg-white z-10 px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 whitespace-nowrap">Safety Score</th>
+                  <th className="sticky top-0 bg-white z-10 px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 whitespace-nowrap">Completion Rate</th>
+                  <th className="sticky top-0 bg-white z-10 px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 whitespace-nowrap">Status</th>
+                  <th className="sticky top-0 bg-white z-10 px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {drivers.map(d => (
-                  <tr key={d.id}>
-                    <td style={{ fontWeight: 600 }}>{d.name}</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ 
-                          color: isExpired(d.licenseExpiryDate) ? 'var(--red)' : 'var(--text-secondary)',
-                          fontWeight: isExpired(d.licenseExpiryDate) ? 700 : 400,
-                          padding: isExpired(d.licenseExpiryDate) ? '0.2rem 0.5rem' : '0',
-                          background: isExpired(d.licenseExpiryDate) ? 'var(--red-bg)' : 'transparent',
-                          borderRadius: '4px'
-                        }}>
+                  <tr key={d.id} className="hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-none">
+                    <td className="px-5 py-3.5 text-sm font-semibold text-gray-900 whitespace-nowrap">{d.name}</td>
+                    <td className="px-5 py-3.5 whitespace-nowrap">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className={`${isExpired(d.licenseExpiryDate) ? 'text-red-700 font-bold bg-red-50 px-2 py-0.5 rounded' : 'text-gray-600'}`}>
                           {new Date(d.licenseExpiryDate).toLocaleDateString('en-IN')}
                         </span>
-                        {isExpired(d.licenseExpiryDate) && <ShieldAlert size={14} color="var(--red)" />}
+                        {isExpired(d.licenseExpiryDate) && <ShieldAlert size={14} className="text-red-600" />}
                       </div>
                     </td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={{ flex: 1, height: '6px', background: 'var(--bg-surface)', borderRadius: '3px', position: 'relative', minWidth: '80px' }}>
-                          <div style={{ 
-                            position: 'absolute', left: 0, top: 0, height: '100%', 
-                            width: `${d.safetyScore}%`, borderRadius: '3px',
-                            background: d.safetyScore > 80 ? 'var(--green)' : d.safetyScore > 60 ? 'var(--amber)' : 'var(--red)'
-                          }} />
+                    <td className="px-5 py-3.5 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-gray-100 rounded-full relative min-w-[80px]">
+                          <div
+                            className={`absolute left-0 top-0 h-full rounded-full ${d.safetyScore > 80 ? 'bg-green-500' : d.safetyScore > 60 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                            style={{ width: `${d.safetyScore}%` }}
+                          />
                         </div>
-                        <span style={{ fontSize: '0.8125rem', fontWeight: 600, minWidth: '32px' }}>{d.safetyScore}</span>
+                        <span className="text-[0.8125rem] font-semibold text-gray-900 min-w-[32px]">{d.safetyScore}</span>
                       </div>
                     </td>
-                    <td>
-                      <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: d.completionRate > 90 ? 'var(--green)' : 'var(--text-primary)' }}>
+                    <td className="px-5 py-3.5 whitespace-nowrap">
+                      <div className={`text-[0.8125rem] font-semibold ${d.completionRate > 90 ? 'text-green-600' : 'text-gray-900'}`}>
                         {d.completionRate}%
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400 }}>
+                        <div className="text-[0.7rem] text-gray-500 font-normal mt-0.5">
                           {d.completedTrips} of {d.totalTrips} trips
                         </div>
                       </div>
                     </td>
-                    <td><StatusBadge status={d.status} /></td>
-                    <td>
+                    <td className="px-5 py-3.5 whitespace-nowrap"><StatusBadge status={d.status} /></td>
+                    <td className="px-5 py-3.5 whitespace-nowrap">
                       {isSafetyOfficer && (
-                        <button 
+                        <button
                           onClick={() => handleStatusToggle(d.id, d.status)}
-                          className={d.status === 'SUSPENDED' ? 'btn-ghost' : 'btn-danger'}
-                          style={{ padding: '0.3125rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
+                          className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${d.status === 'SUSPENDED'
+                              ? 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm'
+                              : 'bg-red-50 text-red-700 border border-transparent hover:bg-red-100'
+                            }`}
                         >
                           {d.status === 'SUSPENDED' ? (
                             <><UserCheck size={14} /> Reinstate</>

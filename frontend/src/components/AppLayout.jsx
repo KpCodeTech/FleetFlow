@@ -1,16 +1,15 @@
+
 import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
 export default function AppLayout() {
   return (
-    <div
-      style={{ height: '100vh', width: '100vw', display: 'flex', overflow: 'hidden', backgroundColor: 'var(--bg-base)' }}
-    >
+    <div className="h-screen w-screen flex overflow-hidden bg-gray-50">
       <Sidebar />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }} className="fade-in">
+        <main className="flex-1 overflow-y-auto p-6 fade-in">
           <Outlet />
         </main>
       </div>

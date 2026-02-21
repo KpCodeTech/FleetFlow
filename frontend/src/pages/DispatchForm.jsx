@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Send, AlertCircle, CheckCircle, AlertTriangle, Truck, Users } from 'lucide-react';
 import { coreApi } from '../lib/api';
@@ -6,7 +7,7 @@ const fmt = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency:
 
 export default function DispatchForm() {
   const [vehicles, setVehicles] = useState([]);
-  const [drivers,  setDrivers]  = useState([]);
+  const [drivers, setDrivers] = useState([]);
   const [form, setForm] = useState({ vehicleId: '', driverId: '', cargoWeight: '', revenue: '' });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -27,7 +28,7 @@ export default function DispatchForm() {
   }, []);
 
   const selectedVehicle = vehicles.find(v => v.id === Number(form.vehicleId));
-  const selectedDriver  = drivers.find(d => d.id === Number(form.driverId));
+  const selectedDriver = drivers.find(d => d.id === Number(form.driverId));
   const overloaded = selectedVehicle && form.cargoWeight && Number(form.cargoWeight) > selectedVehicle.maxCapacityKg;
   const isExpiredDriver = selectedDriver && new Date(selectedDriver.licenseExpiryDate) < new Date();
 
@@ -36,10 +37,10 @@ export default function DispatchForm() {
     setSubmitting(true); setResult(null);
     try {
       const { data } = await coreApi.post('/api/trips/dispatch', {
-        vehicleId:   Number(form.vehicleId),
-        driverId:    Number(form.driverId),
+        vehicleId: Number(form.vehicleId),
+        driverId: Number(form.driverId),
         cargoWeight: Number(form.cargoWeight),
-        revenue:     Number(form.revenue || 0),
+        revenue: Number(form.revenue || 0),
       });
       setResult({ type: 'success', message: `✅ Trip #${data.trip.id} dispatched! ${data.trip.vehicle.nameModel} → ${data.trip.driver.name}` });
       setForm({ vehicleId: '', driverId: '', cargoWeight: '', revenue: '' });
@@ -56,10 +57,10 @@ export default function DispatchForm() {
     setSavingDraft(true); setResult(null);
     try {
       const { data } = await coreApi.post('/api/trips', {
-        vehicleId:   Number(form.vehicleId),
-        driverId:    Number(form.driverId),
+        vehicleId: Number(form.vehicleId),
+        driverId: Number(form.driverId),
         cargoWeight: Number(form.cargoWeight),
-        revenue:     Number(form.revenue || 0),
+        revenue: Number(form.revenue || 0),
       });
       setResult({ type: 'success', message: `📝 Trip #${data.trip.id} saved as draft!` });
       setForm({ vehicleId: '', driverId: '', cargoWeight: '', revenue: '' });
@@ -71,38 +72,33 @@ export default function DispatchForm() {
   const canSubmit = form.vehicleId && form.driverId && form.cargoWeight && !overloaded && !isExpiredDriver;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '760px' }}>
+    <div className="flex flex-col gap-5 max-w-[760px]">
       <div>
-        <h2 className="page-title">Dispatch Center</h2>
-        <p className="page-subtitle">Assign an available vehicle and driver to a new trip</p>
+        <h2 className="text-2xl font-bold text-gray-900 tracking-tight m-0">Dispatch Center</h2>
+        <p className="text-sm text-gray-500 mt-1 mb-0">Assign an available vehicle and driver to a new trip</p>
       </div>
 
       {/* Result Banner */}
       {result && (
-        <div style={{
-          display: 'flex', alignItems: 'flex-start', gap: '0.625rem', padding: '0.875rem 1rem',
-          borderRadius: '0.5rem', fontSize: '0.875rem', fontWeight: 500,
-          background: result.type === 'success' ? 'var(--green-bg)' : 'var(--red-bg)',
-          color:      result.type === 'success' ? 'var(--green)'    : 'var(--red)',
-          border: `1px solid ${result.type === 'success' ? 'var(--green)' : 'var(--red)'}`,
-        }}>
+        <div className={`flex items-start gap-2.5 px-4 py-3.5 rounded-lg text-sm font-medium border ${result.type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
+          }`}>
           {result.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
           {result.message}
         </div>
       )}
 
-      <div className="card" style={{ padding: '1.5rem' }}>
+      <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-6">
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading fleet data...</div>
+          <div className="text-center p-8 text-gray-500">Loading fleet data...</div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
 
             {/* Vehicle Select */}
             <div>
-              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                <Truck size={14} /> Vehicle <span style={{ color: 'var(--green)', fontSize: '0.7rem', fontWeight: 600 }}>({vehicles.length} available)</span>
+              <label className="flex items-center gap-1.5 text-[0.8125rem] font-medium text-gray-700 mb-1.5">
+                <Truck size={14} /> Vehicle <span className="text-green-600 text-[0.7rem] font-bold">({vehicles.length} available)</span>
               </label>
-              <select className="form-input" value={form.vehicleId} onChange={e => setForm({ ...form, vehicleId: e.target.value })} required>
+              <select className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-lg px-3.5 py-2.5 text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all appearance-none" value={form.vehicleId} onChange={e => setForm({ ...form, vehicleId: e.target.value })} required>
                 <option value="">-- Select an available vehicle --</option>
                 {vehicles.map(v => (
                   <option key={v.id} value={v.id}>
@@ -111,19 +107,19 @@ export default function DispatchForm() {
                 ))}
               </select>
               {selectedVehicle && (
-                <div style={{ marginTop: '0.5rem', padding: '0.625rem 0.875rem', background: 'var(--bg-surface)', borderRadius: '0.375rem', fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', gap: '1.5rem' }}>
-                  <span>📦 Max Capacity: <strong style={{ color: 'var(--text-primary)' }}>{selectedVehicle.maxCapacityKg} kg</strong></span>
-                  <span>🛣 Odometer: <strong style={{ color: 'var(--text-primary)' }}>{selectedVehicle.odometer.toLocaleString()} km</strong></span>
+                <div className="mt-2 px-3.5 py-2.5 bg-gray-50 rounded-lg text-xs text-gray-600 flex gap-6">
+                  <span>📦 Max Capacity: <strong className="text-gray-900 font-semibold">{selectedVehicle.maxCapacityKg} kg</strong></span>
+                  <span>🛣 Odometer: <strong className="text-gray-900 font-semibold">{selectedVehicle.odometer.toLocaleString()} km</strong></span>
                 </div>
               )}
             </div>
 
             {/* Driver Select */}
             <div>
-              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                <Users size={14} /> Driver <span style={{ color: 'var(--green)', fontSize: '0.7rem', fontWeight: 600 }}>({drivers.length} available)</span>
+              <label className="flex items-center gap-1.5 text-[0.8125rem] font-medium text-gray-700 mb-1.5">
+                <Users size={14} /> Driver <span className="text-green-600 text-[0.7rem] font-bold">({drivers.length} available)</span>
               </label>
-              <select className="form-input" value={form.driverId} onChange={e => setForm({ ...form, driverId: e.target.value })} required>
+              <select className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-lg px-3.5 py-2.5 text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all appearance-none" value={form.driverId} onChange={e => setForm({ ...form, driverId: e.target.value })} required>
                 <option value="">-- Select an available driver --</option>
                 {drivers.map(d => (
                   <option key={d.id} value={d.id}>
@@ -132,46 +128,51 @@ export default function DispatchForm() {
                 ))}
               </select>
               {isExpiredDriver && (
-                <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--red)', fontSize: '0.8rem' }}>
+                <div className="mt-2 flex items-center gap-2 text-red-600 text-xs font-medium">
                   <AlertCircle size={14} /> License expired on {new Date(selectedDriver.licenseExpiryDate).toLocaleDateString()} — cannot dispatch
                 </div>
               )}
             </div>
 
             {/* Cargo & Revenue */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="form-label">Cargo Weight (kg)</label>
-                <input type="number" className="form-input" placeholder="e.g. 1200" min="1"
+                <label className="block text-[0.8125rem] font-medium text-gray-700 mb-1.5">Cargo Weight (kg)</label>
+                <input type="number"
+                  className={`w-full bg-gray-50 border ${overloaded ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:ring-blue-500 focus:border-blue-500'} text-gray-900 rounded-lg px-3.5 py-2.5 text-sm focus:bg-white focus:ring-2 focus:outline-none transition-all`}
+                  placeholder="e.g. 1200" min="1"
                   value={form.cargoWeight} onChange={e => setForm({ ...form, cargoWeight: e.target.value })} required
-                  style={{ borderColor: overloaded ? 'var(--red)' : undefined }}
                 />
                 {overloaded && (
-                  <div style={{ marginTop: '0.375rem', display: 'flex', alignItems: 'center', gap: '0.375rem', color: 'var(--red)', fontSize: '0.79rem' }}>
+                  <div className="mt-1.5 flex items-center gap-1.5 text-red-600 text-xs font-medium">
                     <AlertTriangle size={14} />
-                    Exceeds vehicle max capacity of {selectedVehicle.maxCapacityKg} kg!
+                    Exceeds vehicle max capacity!
                   </div>
                 )}
               </div>
               <div>
-                <label className="form-label">Expected Revenue (₹)</label>
-                <input type="number" className="form-input" placeholder="e.g. 15000" min="0"
+                <label className="block text-[0.8125rem] font-medium text-gray-700 mb-1.5">Expected Revenue (₹)</label>
+                <input type="number"
+                  className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-lg px-3.5 py-2.5 text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                  placeholder="e.g. 15000" min="0"
                   value={form.revenue} onChange={e => setForm({ ...form, revenue: e.target.value })}
                 />
               </div>
             </div>
 
             {/* Submit */}
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button type="submit" className="btn-primary" disabled={!canSubmit || submitting || savingDraft}
-                style={{ alignSelf: 'flex-start', padding: '0.6875rem 1.75rem', fontSize: '0.9375rem', opacity: (!canSubmit || submitting || savingDraft) ? 0.5 : 1 }}
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button type="submit"
+                className={`flex justify-center items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-all sm:w-auto w-full ${(!canSubmit || submitting || savingDraft) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={!canSubmit || submitting || savingDraft}
               >
                 <Send size={16} />
                 {submitting ? 'Dispatching...' : 'Dispatch Trip'}
               </button>
-              
-              <button type="button" className="btn-ghost" disabled={!canSubmit || submitting || savingDraft} onClick={handleSaveDraft}
-                style={{ padding: '0.6875rem 1.75rem', fontSize: '0.9375rem', opacity: (!canSubmit || submitting || savingDraft) ? 0.5 : 1 }}
+
+              <button type="button"
+                className={`flex justify-center items-center px-6 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-lg transition-all sm:w-auto w-full ${(!canSubmit || submitting || savingDraft) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={!canSubmit || submitting || savingDraft} onClick={handleSaveDraft}
               >
                 {savingDraft ? 'Saving...' : 'Save as Draft'}
               </button>

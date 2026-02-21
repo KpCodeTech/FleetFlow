@@ -1,14 +1,15 @@
+
 import { useLocation } from 'react-router-dom';
 import { Bell, Search } from 'lucide-react';
 
 const PAGE_TITLES = {
-  '/':            { title: 'Dashboard',          subtitle: 'Fleet command center overview' },
-  '/vehicles':    { title: 'Vehicle Registry',   subtitle: 'Manage your fleet assets' },
-  '/drivers':     { title: 'Driver Management',  subtitle: 'Driver profiles and status' },
-  '/trips':       { title: 'Trip History',        subtitle: 'All dispatched and completed trips' },
-  '/dispatch':    { title: 'Dispatch Center',    subtitle: 'Assign vehicles and drivers to trips' },
-  '/maintenance': { title: 'Maintenance Logs',   subtitle: 'Vehicle service records' },
-  '/analytics':   { title: 'Financial Analytics','subtitle': 'ROI, fuel efficiency, and reporting' },
+  '/': { title: 'Dashboard', subtitle: 'Fleet command center overview' },
+  '/vehicles': { title: 'Vehicle Registry', subtitle: 'Manage your fleet assets' },
+  '/drivers': { title: 'Driver Management', subtitle: 'Driver profiles and status' },
+  '/trips': { title: 'Trip History', subtitle: 'All dispatched and completed trips' },
+  '/dispatch': { title: 'Dispatch Center', subtitle: 'Assign vehicles and drivers to trips' },
+  '/maintenance': { title: 'Maintenance Logs', subtitle: 'Vehicle service records' },
+  '/analytics': { title: 'Financial Analytics', 'subtitle': 'ROI, fuel efficiency, and reporting' },
 };
 
 export default function Header() {
@@ -16,72 +17,40 @@ export default function Header() {
   const page = PAGE_TITLES[pathname] || { title: 'FleetFlow', subtitle: '' };
 
   return (
-    <header style={{
-      height: '60px',
-      minHeight: '60px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '0 1.5rem',
-      backgroundColor: 'var(--bg-surface)',
-      borderBottom: '1px solid var(--border)',
-      flexShrink: 0,
-    }}>
+    <header className="h-[70px] min-h-[70px] flex items-center justify-between px-6 bg-white border-b border-gray-200 shrink-0">
       {/* Page Title */}
       <div>
-        <h1 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
+        <h1 className="text-base font-bold text-gray-900 m-0 leading-tight">
           {page.title}
         </h1>
-        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+        <p className="text-xs text-gray-500 m-0 mt-0.5">
           {page.subtitle}
         </p>
       </div>
 
       {/* Right Controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <div className="flex items-center gap-3">
         {/* Search */}
-        <div style={{ position: 'relative' }}>
+        <div className="relative">
           <Search
             size={14}
-            style={{ position: 'absolute', left: '0.625rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
           />
           <input
             placeholder="Search..."
-            style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              borderRadius: '0.375rem',
-              padding: '0.375rem 0.75rem 0.375rem 2rem',
-              color: 'var(--text-primary)',
-              fontSize: '0.8125rem',
-              outline: 'none',
-              width: '180px',
-            }}
+            className="bg-gray-50 border border-gray-200 rounded-md py-1.5 pr-3 pl-8 text-gray-900 text-[0.8125rem] outline-none w-[180px] focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
         </div>
 
         {/* Notification Bell */}
-        <button style={{
-          position: 'relative',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          borderRadius: '0.5rem',
-          padding: '0.4375rem',
-          cursor: 'pointer',
-          display: 'flex', alignItems: 'center',
-          color: 'var(--text-secondary)',
-        }}>
+        <button className="relative bg-white border border-gray-200 rounded-lg p-1.5 cursor-pointer flex items-center text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors">
           <Bell size={16} />
-          <span style={{
-            position: 'absolute', top: '4px', right: '4px',
-            width: '7px', height: '7px',
-            borderRadius: '50%', background: 'var(--red)',
-          }} className="pulse-dot" />
+          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 pulse-dot" />
         </button>
 
         {/* Live indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: 'var(--green)' }}>
-          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} className="pulse-dot" />
+        <div className="flex items-center gap-1.5 text-xs text-green-600 font-medium ml-1">
+          <span className="w-2 h-2 rounded-full bg-green-500 inline-block pulse-dot" />
           Live
         </div>
       </div>
