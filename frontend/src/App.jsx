@@ -1,9 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import AppLayout from './components/AppLayout';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Vehicles from './pages/Vehicles';
 import Drivers from './pages/Drivers';
+import DriverProfiles from './pages/DriverProfiles';
 import Trips from './pages/Trips';
 import DispatchForm from './pages/DispatchForm';
 import Maintenance from './pages/Maintenance';
@@ -36,6 +39,8 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           path="/"
           element={
@@ -46,7 +51,7 @@ export default function App() {
         >
           <Route index element={<Dashboard />} />
           <Route path="vehicles"    element={<PrivateRoute path="/vehicles"><Vehicles /></PrivateRoute>} />
-          <Route path="drivers"     element={<PrivateRoute path="/drivers"><Drivers /></PrivateRoute>} />
+          <Route path="drivers"     element={<PrivateRoute path="/drivers"><DriverProfiles /></PrivateRoute>} />
           <Route path="trips"       element={<PrivateRoute path="/trips"><Trips /></PrivateRoute>} />
           <Route path="dispatch"    element={<PrivateRoute path="/dispatch"><DispatchForm /></PrivateRoute>} />
           <Route path="maintenance" element={<PrivateRoute path="/maintenance"><Maintenance /></PrivateRoute>} />

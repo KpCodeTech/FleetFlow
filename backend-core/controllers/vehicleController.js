@@ -40,11 +40,11 @@ const update = asyncHandler(async (req, res) => {
   const vehicle = await prisma.vehicle.update({
     where: { id: Number(req.params.id) },
     data: {
-      ...(nameModel       && { nameModel }),
-      ...(maxCapacityKg   && { maxCapacityKg: Number(maxCapacityKg) }),
-      ...(acquisitionCost && { acquisitionCost: Number(acquisitionCost) }),
-      ...(status          && { status }),
-      ...(odometer !== undefined && { odometer: Number(odometer) }),
+      ...(nameModel                !== undefined && { nameModel }),
+      ...(maxCapacityKg           !== undefined && { maxCapacityKg: Number(maxCapacityKg) }),
+      ...(acquisitionCost         !== undefined && { acquisitionCost: Number(acquisitionCost) }),
+      ...(status                  !== undefined && { status }),
+      ...(odometer                !== undefined && { odometer: Number(odometer) }),
     },
   });
   res.json(vehicle);
@@ -52,8 +52,17 @@ const update = asyncHandler(async (req, res) => {
 
 // DELETE /api/vehicles/:id
 const remove = asyncHandler(async (req, res) => {
-  await prisma.vehicle.delete({ where: { id: Number(req.params.id) } });
-  res.json({ message: 'Vehicle deleted successfully' });
+  try {
+    await prisma.vehicle.delete({ where: { id: Number(req.params.id) } });
+    res.json({ message: 'Vehicle deleted successfully' });
+  } catch (err) {
+    if (err.code === 'P2003' || err.code === 'P2014') {
+      return res.status(409).json({
+        error: 'Cannot delete this vehicle — it has linked trips, maintenance logs, or expenses. Remove those records first.',
+      });
+    }
+    throw err; // re-throw unexpected errors to global handler
+  }
 });
 
 module.exports = { getAll, getOne, create, update, remove };

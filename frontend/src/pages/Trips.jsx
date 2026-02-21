@@ -1,40 +1,54 @@
 import { useEffect, useState } from 'react';
-import { RefreshCw, Route } from 'lucide-react';
+import { RefreshCw, Route, AlertCircle, X } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 import { coreApi } from '../lib/api';
 
 const fmt = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 
 export default function Trips() {
-  const [trips,   setTrips]   = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filter,  setFilter]  = useState('ALL');
-  const [completing, setCompleting] = useState(null);
-  const [finalOdometer, setFinalOdometer] = useState('');
+  const [trips,          setTrips]          = useState([]);
+  const [loading,        setLoading]        = useState(true);
+  const [filter,         setFilter]         = useState('ALL');
+  const [completing,     setCompleting]     = useState(null);  // tripId being expanded
+  const [odometerMap,    setOdometerMap]    = useState({});    // { [tripId]: string }
+  const [error,          setError]          = useState('');
+
+  const user = JSON.parse(localStorage.getItem('fleetflow_user') || '{}');
+  const canAction = ['MANAGER', 'DISPATCHER'].includes(user.role);
 
   const load = async () => {
     setLoading(true);
     try { setTrips((await coreApi.get('/api/trips')).data); }
+    catch { setError('Failed to load trips. Please refresh.'); }
     finally { setLoading(false); }
   };
   useEffect(() => { load(); }, []);
 
   const handleComplete = async (tripId) => {
+    setError('');
     try {
+      const odometer = odometerMap[tripId];
       await coreApi.patch(`/api/trips/${tripId}/complete`, {
-        finalOdometer: finalOdometer ? Number(finalOdometer) : undefined,
+        finalOdometer: odometer ? Number(odometer) : undefined,
       });
-      setCompleting(null); setFinalOdometer(''); load();
-    } catch (err) { alert(err.response?.data?.error || 'Failed to complete trip'); }
+      setCompleting(null);
+      setOdometerMap(prev => { const n = { ...prev }; delete n[tripId]; return n; });
+      load();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to complete trip.');
+    }
   };
 
   const handleCancel = async (tripId) => {
-    if (!confirm('Cancel this trip?')) return;
+    setError('');
     try { await coreApi.patch(`/api/trips/${tripId}/cancel`); load(); }
-    catch (err) { alert(err.response?.data?.error || 'Failed to cancel trip'); }
+    catch (err) { setError(err.response?.data?.error || 'Failed to cancel trip.'); }
   };
 
-  const STATUS_FILTER = ['ALL', 'DISPATCHED', 'COMPLETED', 'CANCELLED'];
+  const setOdometer = (tripId, val) =>
+    setOdometerMap(prev => ({ ...prev, [tripId]: val }));
+
+  const STATUS_FILTER = ['ALL', 'DRAFT', 'DISPATCHED', 'COMPLETED', 'CANCELLED'];
   const filtered = filter === 'ALL' ? trips : trips.filter(t => t.status === filter);
 
   return (
@@ -47,7 +61,23 @@ export default function Trips() {
         <button className="btn-ghost" onClick={load}><RefreshCw size={15} />Refresh</button>
       </div>
 
-      {/* Filter Tabs */}
+      {/* Inline Error Banner */}
+      {error && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '0.625rem',
+          padding: '0.75rem 1rem', borderRadius: '0.5rem',
+          background: 'var(--red-bg)', color: 'var(--red)',
+          border: '1px solid var(--red)', fontSize: '0.875rem',
+        }}>
+          <AlertCircle size={16} style={{ flexShrink: 0 }} />
+          <span style={{ flex: 1 }}>{error}</span>
+          <button onClick={() => setError('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--red)', padding: 0 }}>
+            <X size={15} />
+          </button>
+        </div>
+      )}
+
+      {/* Filter Tabs — now includes DRAFT */}
       <div style={{ display: 'flex', gap: '0.375rem' }}>
         {STATUS_FILTER.map(s => (
           <button key={s} onClick={() => setFilter(s)} style={{
@@ -69,11 +99,11 @@ export default function Trips() {
           ) : (
             <table className="data-table">
               <thead>
-                <tr><th>#</th><th>Vehicle</th><th>Driver</th><th>Cargo</th><th>Revenue</th><th>Start Date</th><th>Status</th><th>Actions</th></tr>
+                <tr><th>#</th><th>Vehicle</th><th>Driver</th><th>Cargo</th><th>Revenue</th><th>Start Date</th><th>Status</th>{canAction && <th>Actions</th>}</tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2.5rem' }}>
+                  <tr><td colSpan={canAction ? 8 : 7} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2.5rem' }}>
                     <Route size={32} style={{ display: 'block', margin: '0 auto 0.5rem', opacity: 0.3 }} />
                     No trips found
                   </td></tr>
@@ -86,26 +116,32 @@ export default function Trips() {
                     <td style={{ fontWeight: 600, color: 'var(--green)' }}>{fmt(t.revenue)}</td>
                     <td style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>{new Date(t.startDate).toLocaleDateString('en-IN')}</td>
                     <td><StatusBadge status={t.status} /></td>
-                    <td>
-                      {t.status === 'DISPATCHED' && (
-                        completing === t.id ? (
-                          <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
-                            <input
-                              type="number" placeholder="Final odometer"
-                              className="form-input" style={{ width: '140px', padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
-                              value={finalOdometer} onChange={e => setFinalOdometer(e.target.value)}
-                            />
-                            <button className="btn-primary" style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem' }} onClick={() => handleComplete(t.id)}>✓</button>
-                            <button className="btn-ghost" style={{ padding: '0.3rem 0.625rem', fontSize: '0.8rem' }} onClick={() => setCompleting(null)}>✕</button>
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', gap: '0.375rem' }}>
-                            <button className="btn-primary" style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem' }} onClick={() => setCompleting(t.id)}>Complete</button>
-                            <button className="btn-danger" onClick={() => handleCancel(t.id)}>Cancel</button>
-                          </div>
-                        )
-                      )}
-                    </td>
+                    {canAction && (
+                      <td>
+                        {t.status === 'DISPATCHED' && (
+                          completing === t.id ? (
+                            <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+                              <input
+                                type="number" placeholder="Final odometer (km)"
+                                className="form-input" style={{ width: '160px', padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                                value={odometerMap[t.id] || ''}
+                                onChange={e => setOdometer(t.id, e.target.value)}
+                              />
+                              <button className="btn-primary" style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem' }} onClick={() => handleComplete(t.id)}>✓ Done</button>
+                              <button className="btn-ghost" style={{ padding: '0.3rem 0.625rem', fontSize: '0.8rem' }} onClick={() => setCompleting(null)}>✕</button>
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', gap: '0.375rem' }}>
+                              <button className="btn-primary" style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem' }} onClick={() => setCompleting(t.id)}>Complete</button>
+                              <button className="btn-danger" style={{ padding: '0.3rem 0.625rem', fontSize: '0.8rem' }} onClick={() => handleCancel(t.id)}>Cancel</button>
+                            </div>
+                          )
+                        )}
+                        {t.status === 'DRAFT' && (
+                          <button className="btn-danger" style={{ padding: '0.3rem 0.625rem', fontSize: '0.8rem' }} onClick={() => handleCancel(t.id)}>Cancel</button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

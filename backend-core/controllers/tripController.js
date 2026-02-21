@@ -17,6 +17,14 @@ const createDraft = asyncHandler(async (req, res) => {
   if (Number(cargoWeight) > vehicle.maxCapacityKg)
     return res.status(400).json({ error: `Cargo (${cargoWeight} kg) exceeds capacity (${vehicle.maxCapacityKg} kg)`, code: 'CARGO_OVERLOAD' });
 
+  // ── Availability guards (same as dispatch, but non-blocking for draft if needed) ──
+  if (vehicle.status !== 'AVAILABLE') {
+    return res.status(400).json({ error: `Vehicle is currently ${vehicle.status} and cannot be drafted`, code: 'VEHICLE_UNAVAILABLE' });
+  }
+  if (driver.status !== 'AVAILABLE') {
+    return res.status(400).json({ error: `Driver is currently ${driver.status} and cannot be drafted`, code: 'DRIVER_UNAVAILABLE' });
+  }
+
   const trip = await prisma.trip.create({
     data: { vehicleId: Number(vehicleId), driverId: Number(driverId), cargoWeight: Number(cargoWeight), revenue: Number(revenue || 0), status: 'DRAFT' },
     include: { vehicle: true, driver: true },

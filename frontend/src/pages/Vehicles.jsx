@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, RefreshCw, Truck, Pencil, Trash2, XCircle, CheckCircle } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
+import ConfirmModal from '../components/ConfirmModal';
 import { coreApi } from '../lib/api';
 
 const fmt = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
@@ -10,14 +11,16 @@ export default function Vehicles() {
   const [vehicles, setVehicles] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editId,   setEditId]   = useState(null);   // null = create mode, number = edit mode
+  const [editId,   setEditId]   = useState(null);
   const [form,     setForm]     = useState(EMPTY);
   const [saving,   setSaving]   = useState(false);
   const [error,    setError]    = useState('');
   const [filter,   setFilter]   = useState('ALL');
-  const [deletingId, setDeletingId] = useState(null);
 
-  const user = JSON.parse(localStorage.getItem('fleetflow_user') || '{}');
+  // ConfirmModal state
+  const [confirm, setConfirm] = useState({ open: false, vehicleId: null });
+
+  const user    = JSON.parse(localStorage.getItem('fleetflow_user') || '{}');
   const canEdit = ['MANAGER', 'DISPATCHER'].includes(user.role);
 
   const load = async () => {
@@ -49,12 +52,12 @@ export default function Vehicles() {
     finally { setSaving(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Permanently delete this vehicle? This cannot be undone.')) return;
-    setDeletingId(id);
+  const handleDelete = async () => {
+    const id = confirm.vehicleId;
+    setConfirm({ open: false, vehicleId: null });
+    setError('');
     try { await coreApi.delete(`/api/vehicles/${id}`); load(); }
     catch (err) { setError(err.response?.data?.error || 'Delete failed'); }
-    finally { setDeletingId(null); }
   };
 
   const toggleRetired = async (v) => {
@@ -68,6 +71,17 @@ export default function Vehicles() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', height: '100%' }}>
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        open={confirm.open}
+        title="Delete Vehicle"
+        message="Permanently delete this vehicle? This cannot be undone. You cannot delete a vehicle that has linked trips, maintenance logs, or expenses."
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirm({ open: false, vehicleId: null })}
+      />
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
@@ -172,8 +186,7 @@ export default function Vehicles() {
                           <button
                             className="btn-ghost"
                             style={{ padding: '0.25rem 0.625rem', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                            onClick={() => openEdit(v)}
-                            title="Edit vehicle"
+                            onClick={() => openEdit(v)} title="Edit vehicle"
                           >
                             <Pencil size={13} /> Edit
                           </button>
@@ -193,15 +206,16 @@ export default function Vehicles() {
                               : <><XCircle size={13} /> Retire</>
                             }
                           </button>
-                          <button
-                            className="btn-danger"
-                            style={{ padding: '0.25rem 0.625rem', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                            onClick={() => handleDelete(v.id)}
-                            disabled={deletingId === v.id}
-                            title="Delete vehicle permanently"
-                          >
-                            <Trash2 size={13} /> {deletingId === v.id ? '...' : 'Delete'}
-                          </button>
+                          {user.role === 'MANAGER' && (
+                            <button
+                              className="btn-danger"
+                              style={{ padding: '0.25rem 0.625rem', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                              onClick={() => setConfirm({ open: true, vehicleId: v.id })}
+                              title="Delete vehicle permanently"
+                            >
+                              <Trash2 size={13} /> Delete
+                            </button>
+                          )}
                         </div>
                       </td>
                     )}

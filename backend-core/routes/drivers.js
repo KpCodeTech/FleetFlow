@@ -5,7 +5,7 @@ const { authenticate, authorize } = require('../middleware/auth');
 router.get('/',       authenticate, getAll);
 router.get('/:id',    authenticate, getOne);
 router.post('/',      authenticate, authorize('MANAGER', 'DISPATCHER'), create);
-router.patch('/:id',  authenticate, authorize('MANAGER', 'DISPATCHER'), update);
+router.patch('/:id',  authenticate, authorize('MANAGER', 'DISPATCHER', 'SAFETY_OFFICER'), update);
 router.delete('/:id', authenticate, authorize('MANAGER'), remove);
 
 module.exports = router;

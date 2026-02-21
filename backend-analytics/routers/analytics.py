@@ -313,3 +313,56 @@ def export_fleet_pdf(db: Session = Depends(get_db)):
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename=fleetflow_audit_{datetime.date.today()}.pdf"},
     )
+
+
+# ── GET /analytics/export-payroll ─────────────────────────────────────────────
+@router.get("/export-payroll")
+def export_payroll(db: Session = Depends(get_db)):
+    """
+    Monthly Driver Payroll & Performance Report — CSV download.
+    Columns: Driver Name, Total Trips, Completed Trips, Completion Rate (%),
+             Revenue Generated (₹), Avg Safety Score, License Expiry, Status.
+    """
+    drivers = db.query(Driver).all()
+    output  = io.StringIO()
+    writer  = csv.writer(output)
+
+    writer.writerow([
+        "Driver ID", "Driver Name", "Status",
+        "Total Trips", "Completed Trips", "Completion Rate (%)",
+        "Revenue Generated (₹)", "Avg Safety Score",
+        "License Expiry Date", "License Status",
+    ])
+
+    for d in drivers:
+        total_trips     = db.query(Trip).filter(Trip.driverId == d.id).count()
+        completed_trips = db.query(Trip).filter(
+            Trip.driverId == d.id,
+            Trip.status   == TripStatus.COMPLETED,
+        ).count()
+
+        completion_rate = round((completed_trips / total_trips) * 100, 1) if total_trips > 0 else 0
+
+        revenue_generated = db.query(func.sum(Trip.revenue)).filter(
+            Trip.driverId == d.id,
+            Trip.status   == TripStatus.COMPLETED,
+        ).scalar() or 0
+
+        license_status = "EXPIRED" if d.licenseExpiryDate and d.licenseExpiryDate < datetime.datetime.now() else "VALID"
+        expiry_str     = d.licenseExpiryDate.strftime("%d-%m-%Y") if d.licenseExpiryDate else "N/A"
+
+        writer.writerow([
+            d.id, d.name, d.status,
+            total_trips, completed_trips, f"{completion_rate}%",
+            round(float(revenue_generated), 2), d.safetyScore,
+            expiry_str, license_status,
+        ])
+
+    output.seek(0)
+    filename = f"fleetflow_payroll_{datetime.date.today()}.csv"
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+

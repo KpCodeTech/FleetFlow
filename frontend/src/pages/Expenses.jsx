@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, RefreshCw, Fuel } from 'lucide-react';
 import { coreApi } from '../lib/api';
+import ConfirmModal from '../components/ConfirmModal';
 
 const fmt    = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 const EMPTY  = { vehicleId: '', tripId: '', fuelLiters: '', fuelCost: '', date: '' };
@@ -15,6 +16,7 @@ export default function Expenses() {
   const [saving,   setSaving]       = useState(false);
   const [error,    setError]        = useState('');
   const [filterVehicle, setFilterV] = useState('ALL');
+  const [confirm, setConfirm]       = useState({ open: false, expenseId: null });
 
   const user    = JSON.parse(localStorage.getItem('fleetflow_user') || '{}');
   const canEdit = ['MANAGER', 'DISPATCHER', 'FINANCE'].includes(user.role);
@@ -43,8 +45,9 @@ export default function Expenses() {
     finally { setSaving(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this fuel log?')) return;
+  const handleDelete = async () => {
+    const id = confirm.expenseId;
+    setConfirm({ open: false, expenseId: null });
     try { await coreApi.delete(`/api/expenses/${id}`); load(); }
     catch (err) { setError(err.response?.data?.error || 'Delete failed'); }
   };
@@ -70,7 +73,14 @@ export default function Expenses() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', height: '100%' }}>
-      {/* Header */}
+      <ConfirmModal
+        open={confirm.open}
+        title="Delete Fuel Log"
+        message="Permanently delete this fuel expense record? This cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirm({ open: false, expenseId: null })}
+      />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <h2 className="page-title">Fuel & Expense Logs</h2>
@@ -207,7 +217,7 @@ export default function Expenses() {
                     </td>
                     {canEdit && (
                       <td>
-                        <button className="btn-danger" style={{ padding: '0.2rem 0.5rem', fontSize: '0.78rem' }} onClick={() => handleDelete(e.id)}>
+                        <button className="btn-danger" style={{ padding: '0.2rem 0.5rem', fontSize: '0.78rem' }} onClick={() => setConfirm({ open: true, expenseId: e.id })}>
                           Delete
                         </button>
                       </td>

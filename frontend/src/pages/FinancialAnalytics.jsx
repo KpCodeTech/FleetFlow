@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Download, FileText, RefreshCw, TrendingUp, Fuel, BarChart3 } from 'lucide-react';
+import { Download, FileText, RefreshCw, TrendingUp, Fuel, BarChart3, Users } from 'lucide-react';
 import { analyticsApi } from '../lib/api';
 
 const fmt   = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n ?? 0);
@@ -10,8 +10,9 @@ export default function FinancialAnalytics() {
   const [fuelData, setFuelData]  = useState([]);
   const [loading,  setLoading]   = useState(true);
   const [error,    setError]     = useState('');
-  const [exporting, setExporting] = useState(false);
-  const [exportingPdf, setExportingPdf] = useState(false);
+  const [exporting,        setExporting]       = useState(false);
+  const [exportingPdf,     setExportingPdf]    = useState(false);
+  const [exportingPayroll, setExportingPayroll]= useState(false);
 
   const load = async () => {
     setLoading(true); setError('');
@@ -39,7 +40,7 @@ export default function FinancialAnalytics() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch { alert('Export failed. Is the analytics API running?'); }
+    } catch { setError('Export failed. Is the analytics API running?'); }
     finally { setExporting(false); }
   };
 
@@ -54,8 +55,23 @@ export default function FinancialAnalytics() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch { alert('PDF export failed. Is the analytics API running?'); }
+    } catch { setError('PDF export failed. Is the analytics API running?'); }
     finally { setExportingPdf(false); }
+  };
+
+  const handleExportPayroll = async () => {
+    setExportingPayroll(true);
+    try {
+      const res  = await analyticsApi.get('/analytics/export-payroll', { responseType: 'blob' });
+      const url  = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href  = url;
+      link.setAttribute('download', `fleetflow_payroll_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch { setError('Payroll export failed. Is the analytics API running?'); }
+    finally { setExportingPayroll(false); }
   };
 
   const totalRevenue = roiData.reduce((s, r) => s + (r.totalRevenue || 0), 0);
@@ -72,7 +88,10 @@ export default function FinancialAnalytics() {
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button className="btn-ghost" onClick={load}><RefreshCw size={15} />Refresh</button>
           <button className="btn-ghost" onClick={handleExport} disabled={exporting}>
-            <Download size={15} />{exporting ? 'Exporting...' : 'CSV'}
+            <Download size={15} />{exporting ? 'Exporting...' : 'Fleet CSV'}
+          </button>
+          <button className="btn-ghost" onClick={handleExportPayroll} disabled={exportingPayroll} style={{ color: 'var(--purple)' }}>
+            <Users size={15} />{exportingPayroll ? 'Exporting...' : 'Payroll CSV'}
           </button>
           <button className="btn-primary" onClick={handleExportPdf} disabled={exportingPdf}>
             <FileText size={15} />{exportingPdf ? 'Generating...' : 'Export PDF'}

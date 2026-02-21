@@ -15,6 +15,9 @@ export default function Maintenance() {
   const [saving,   setSaving]   = useState(false);
   const [error,    setError]    = useState('');
 
+  const user    = JSON.parse(localStorage.getItem('fleetflow_user') || '{}');
+  const canEdit = ['MANAGER', 'DISPATCHER', 'SAFETY_OFFICER'].includes(user.role);
+
   const load = async () => {
     setLoading(true);
     try {
@@ -45,7 +48,9 @@ export default function Maintenance() {
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button className="btn-ghost" onClick={load}><RefreshCw size={15} />Refresh</button>
-          <button className="btn-primary" onClick={() => setShowForm(!showForm)}><Plus size={15} />Log Maintenance</button>
+          {canEdit && (
+            <button className="btn-primary" onClick={() => setShowForm(!showForm)}><Plus size={15} />Log Maintenance</button>
+          )}
         </div>
       </div>
 

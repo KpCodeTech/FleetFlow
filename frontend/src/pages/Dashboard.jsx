@@ -8,10 +8,11 @@ import { coreApi, analyticsApi } from '../lib/api';
 const fmt = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 
 export default function Dashboard() {
-  const [summary,   setSummary]   = useState(null);
-  const [trips,     setTrips]     = useState([]);
-  const [maint,     setMaint]     = useState([]);
-  const [loading,   setLoading]   = useState(true);
+  const [summary,    setSummary]   = useState(null);
+  const [allTrips,   setAllTrips]  = useState([]);
+  const [maint,      setMaint]     = useState([]);
+  const [loading,    setLoading]   = useState(true);
+  const [tripFilter, setTripFilter]= useState('ALL');
 
   useEffect(() => {
     const load = async () => {
@@ -22,7 +23,7 @@ export default function Dashboard() {
           coreApi.get('/api/maintenance'),
         ]);
         setSummary(sumRes.data);
-        setTrips(tripRes.data.slice(0, 5));
+        setAllTrips(tripRes.data);
         setMaint(maintRes.data.slice(0, 4));
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
@@ -34,6 +35,9 @@ export default function Dashboard() {
   const fin   = summary?.financials || {};
   const drv   = summary?.drivers || {};
   const trp   = summary?.trips || {};
+
+  const TRIP_STATUSES = ['ALL', 'DISPATCHED', 'COMPLETED', 'DRAFT', 'CANCELLED'];
+  const trips = tripFilter === 'ALL' ? allTrips.slice(0, 8) : allTrips.filter(t => t.status === tripFilter).slice(0, 8);
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60%', color: 'var(--text-muted)' }}>
@@ -77,9 +81,23 @@ export default function Dashboard() {
           <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
             <div>
               <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>Recent Trips</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Latest dispatched & completed</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{allTrips.length} total · filter by status</div>
             </div>
             <Link to="/trips" style={{ fontSize: '0.8rem', color: 'var(--accent)', textDecoration: 'none' }}>View all →</Link>
+          </div>
+          {/* Status Filter Pills */}
+          <div style={{ padding: '0.625rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '0.375rem', flexShrink: 0 }}>
+            {TRIP_STATUSES.map(s => (
+              <button key={s} onClick={() => setTripFilter(s)} style={{
+                padding: '0.2rem 0.625rem', borderRadius: '999px', border: 'none', cursor: 'pointer',
+                fontSize: '0.72rem', fontWeight: 500,
+                background: tripFilter === s ? 'var(--accent)' : 'var(--bg-surface)',
+                color: tripFilter === s ? '#0d1117' : 'var(--text-secondary)',
+                transition: 'all 0.15s',
+              }}>
+                {s === 'ALL' ? `All (${allTrips.length})` : s}
+              </button>
+            ))}
           </div>
           <div style={{ overflowY: 'auto', flex: 1 }}>
             <table className="data-table">

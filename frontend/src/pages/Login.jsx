@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { coreApi } from '../lib/api';
 import { Zap, AlertCircle, X, Mail } from 'lucide-react';
 
@@ -23,6 +23,19 @@ export default function Login() {
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotSubmit = async () => {
+    if (!forgotEmail) return;
+    setLoading(true);
+    try {
+      const { data } = await coreApi.post('/api/auth/forgot-password', { email: forgotEmail });
+      setForgotSent(data.resetToken); // Store token temporarily for demo link
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to send reset request');
     } finally {
       setLoading(false);
     }
@@ -92,11 +105,17 @@ export default function Login() {
 
             <button
               type="button"
-              onClick={() => { setShowForgot(true); setForgotSent(false); setForgotEmail(''); }}
+              onClick={() => { setShowForgot(true); setForgotSent(null); setForgotEmail(''); }}
               style={{ width: '100%', background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer', marginTop: '0.25rem', padding: '0.25rem' }}
             >
               Forgot password?
             </button>
+
+            <div style={{ borderTop: '1px solid var(--border)', marginTop: '0.5rem', paddingTop: '1rem', textAlign: 'center' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+                Don't have an account? <Link to="/signup" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>Create one</Link>
+              </p>
+            </div>
           </form>
 
           <div style={{ marginTop: '1.25rem', padding: '0.875rem', backgroundColor: 'var(--bg-surface)', borderRadius: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -104,6 +123,7 @@ export default function Login() {
             <div style={{ marginTop: '0.375rem', display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
               <span>parth@fleetflow.com – Manager</span>
               <span>pal@fleetflow.com – Dispatcher</span>
+              <span>yashvi@fleetflow.com – Safety Officer</span>
               <span>jay@fleetflow.com – Finance</span>
               <span style={{ color: 'var(--accent)', marginTop: '0.125rem' }}>Password: password123</span>
             </div>
@@ -130,8 +150,17 @@ export default function Login() {
               </button>
             </div>
             {forgotSent ? (
-              <div style={{ textAlign: 'center', padding: '1rem 0', color: 'var(--green)', fontSize: '0.9rem' }}>
-                ✓ Reset link sent! Check your inbox at <strong>{forgotEmail}</strong>
+              <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+                <div style={{ color: 'var(--green)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                  ✓ Reset link generated! In a real app, this would be sent to your email.
+                </div>
+                <Link 
+                  to={`/reset-password?token=${forgotSent}`}
+                  onClick={() => setShowForgot(false)}
+                  style={{ display: 'block', padding: '0.75rem', background: 'var(--accent-glow)', border: '1px solid var(--accent)', borderRadius: '0.5rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}
+                >
+                  Click Here to Reset Password (Demo)
+                </Link>
               </div>
             ) : (
               <>
@@ -148,14 +177,11 @@ export default function Login() {
                 <button
                   className="btn-primary"
                   style={{ width: '100%', justifyContent: 'center' }}
-                  onClick={() => { if (forgotEmail) setForgotSent(true); }}
-                  disabled={!forgotEmail}
+                  onClick={handleForgotSubmit}
+                  disabled={loading || !forgotEmail}
                 >
-                  Send Reset Link
+                  {loading ? 'Sending...' : 'Send Reset Link'}
                 </button>
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '0.75rem' }}>
-                  (Demo: no actual email is sent)
-                </p>
               </>
             )}
           </div>

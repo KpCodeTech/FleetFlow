@@ -19,7 +19,14 @@ export default function Sidebar() {
   const navigate  = useNavigate();
   const user      = JSON.parse(localStorage.getItem('fleetflow_user') || '{}');
 
-  const navItems = ALL_NAV_ITEMS.filter(item => item.roles.includes(user.role));
+  const navItems = ALL_NAV_ITEMS
+    .filter(item => item.roles.includes(user.role))
+    .map(item => {
+      if (item.to === '/drivers' && (user.role === 'SAFETY_OFFICER' || user.role === 'MANAGER')) {
+        return { ...item, label: 'Safety Profiles' };
+      }
+      return item;
+    });
 
   const handleLogout = () => {
     localStorage.removeItem('fleetflow_token');
