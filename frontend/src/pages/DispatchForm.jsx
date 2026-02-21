@@ -10,6 +10,7 @@ export default function DispatchForm() {
   const [form, setForm] = useState({ vehicleId: '', driverId: '', cargoWeight: '', revenue: '' });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [result, setResult] = useState(null); // { type: 'success'|'error', message }
 
   useEffect(() => {
@@ -49,6 +50,22 @@ export default function DispatchForm() {
     } catch (err) {
       setResult({ type: 'error', message: err.response?.data?.error || 'Dispatch failed.' });
     } finally { setSubmitting(false); }
+  };
+
+  const handleSaveDraft = async () => {
+    setSavingDraft(true); setResult(null);
+    try {
+      const { data } = await coreApi.post('/api/trips', {
+        vehicleId:   Number(form.vehicleId),
+        driverId:    Number(form.driverId),
+        cargoWeight: Number(form.cargoWeight),
+        revenue:     Number(form.revenue || 0),
+      });
+      setResult({ type: 'success', message: `📝 Trip #${data.trip.id} saved as draft!` });
+      setForm({ vehicleId: '', driverId: '', cargoWeight: '', revenue: '' });
+    } catch (err) {
+      setResult({ type: 'error', message: err.response?.data?.error || 'Failed to save draft.' });
+    } finally { setSavingDraft(false); }
   };
 
   const canSubmit = form.vehicleId && form.driverId && form.cargoWeight && !overloaded && !isExpiredDriver;
@@ -145,12 +162,20 @@ export default function DispatchForm() {
             </div>
 
             {/* Submit */}
-            <button type="submit" className="btn-primary" disabled={!canSubmit || submitting}
-              style={{ alignSelf: 'flex-start', padding: '0.6875rem 1.75rem', fontSize: '0.9375rem', opacity: (!canSubmit || submitting) ? 0.5 : 1 }}
-            >
-              <Send size={16} />
-              {submitting ? 'Dispatching...' : 'Dispatch Trip'}
-            </button>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button type="submit" className="btn-primary" disabled={!canSubmit || submitting || savingDraft}
+                style={{ alignSelf: 'flex-start', padding: '0.6875rem 1.75rem', fontSize: '0.9375rem', opacity: (!canSubmit || submitting || savingDraft) ? 0.5 : 1 }}
+              >
+                <Send size={16} />
+                {submitting ? 'Dispatching...' : 'Dispatch Trip'}
+              </button>
+              
+              <button type="button" className="btn-ghost" disabled={!canSubmit || submitting || savingDraft} onClick={handleSaveDraft}
+                style={{ padding: '0.6875rem 1.75rem', fontSize: '0.9375rem', opacity: (!canSubmit || submitting || savingDraft) ? 0.5 : 1 }}
+              >
+                {savingDraft ? 'Saving...' : 'Save as Draft'}
+              </button>
+            </div>
           </form>
         )}
       </div>

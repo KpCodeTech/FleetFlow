@@ -10,6 +10,7 @@ export default function DriverProfiles() {
   
   const user = JSON.parse(localStorage.getItem('fleetflow_user') || '{}');
   const isAuthorized = ['MANAGER', 'SAFETY_OFFICER'].includes(user.role);
+  const isSafetyOfficer = user.role === 'SAFETY_OFFICER';
 
   const load = async () => {
     setLoading(true);
@@ -119,17 +120,19 @@ export default function DriverProfiles() {
                     </td>
                     <td><StatusBadge status={d.status} /></td>
                     <td>
-                      <button 
-                        onClick={() => handleStatusToggle(d.id, d.status)}
-                        className={d.status === 'SUSPENDED' ? 'btn-ghost' : 'btn-danger'}
-                        style={{ padding: '0.3125rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
-                      >
-                        {d.status === 'SUSPENDED' ? (
-                          <><UserCheck size={14} /> Reinstate</>
-                        ) : (
-                          <><UserX size={14} /> Suspend</>
-                        )}
-                      </button>
+                      {isSafetyOfficer && (
+                        <button 
+                          onClick={() => handleStatusToggle(d.id, d.status)}
+                          className={d.status === 'SUSPENDED' ? 'btn-ghost' : 'btn-danger'}
+                          style={{ padding: '0.3125rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
+                        >
+                          {d.status === 'SUSPENDED' ? (
+                            <><UserCheck size={14} /> Reinstate</>
+                          ) : (
+                            <><UserX size={14} /> Suspend</>
+                          )}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

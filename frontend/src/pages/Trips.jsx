@@ -39,6 +39,16 @@ export default function Trips() {
     }
   };
 
+  const handleDispatch = async (tripId) => {
+    setError('');
+    try { 
+      await coreApi.patch(`/api/trips/${tripId}/dispatch`); 
+      load(); 
+    } catch (err) { 
+      setError(err.response?.data?.error || 'Failed to dispatch draft.'); 
+    }
+  };
+
   const handleCancel = async (tripId) => {
     setError('');
     try { await coreApi.patch(`/api/trips/${tripId}/cancel`); load(); }
@@ -118,6 +128,12 @@ export default function Trips() {
                     <td><StatusBadge status={t.status} /></td>
                     {canAction && (
                       <td>
+                        {t.status === 'DRAFT' && (
+                          <div style={{ display: 'flex', gap: '0.375rem' }}>
+                            <button className="btn-ghost" style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem', borderColor: 'var(--accent)', color: 'var(--accent)' }} onClick={() => handleDispatch(t.id)}>Dispatch</button>
+                            <button className="btn-danger" style={{ padding: '0.3rem 0.625rem', fontSize: '0.8rem' }} onClick={() => handleCancel(t.id)}>Cancel</button>
+                          </div>
+                        )}
                         {t.status === 'DISPATCHED' && (
                           completing === t.id ? (
                             <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
@@ -136,9 +152,6 @@ export default function Trips() {
                               <button className="btn-danger" style={{ padding: '0.3rem 0.625rem', fontSize: '0.8rem' }} onClick={() => handleCancel(t.id)}>Cancel</button>
                             </div>
                           )
-                        )}
-                        {t.status === 'DRAFT' && (
-                          <button className="btn-danger" style={{ padding: '0.3rem 0.625rem', fontSize: '0.8rem' }} onClick={() => handleCancel(t.id)}>Cancel</button>
                         )}
                       </td>
                     )}

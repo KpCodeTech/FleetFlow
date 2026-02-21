@@ -111,6 +111,44 @@ const dispatch = asyncHandler(async (req, res) => {
   res.status(201).json({ message: 'Trip dispatched successfully', trip });
 });
 
+// PATCH /api/trips/:id/dispatch
+const dispatchDraft = asyncHandler(async (req, res) => {
+  const tripId = Number(req.params.id);
+
+  const trip = await prisma.trip.findUnique({
+    where: { id: tripId },
+    include: { vehicle: true, driver: true }
+  });
+
+  if (!trip) return res.status(404).json({ error: 'Trip not found' });
+  if (trip.status !== 'DRAFT') return res.status(400).json({ error: 'Only DRAFT trips can be dispatched' });
+
+  // ── Validation: Vehicle & Driver Availability ─────────────────────
+  if (trip.vehicle.status !== 'AVAILABLE') {
+    return res.status(400).json({ error: `Vehicle is currently ${trip.vehicle.status}, not available for dispatch`, code: 'VEHICLE_UNAVAILABLE' });
+  }
+  if (trip.driver.status !== 'AVAILABLE') {
+    return res.status(400).json({ error: `Driver is currently ${trip.driver.status}, not available for dispatch`, code: 'DRIVER_UNAVAILABLE' });
+  }
+
+  // ── Validation: License Expiry ───────────────────────────────────
+  if (new Date(trip.driver.licenseExpiryDate) < new Date()) {
+    return res.status(400).json({ error: 'Driver license is expired', code: 'LICENSE_EXPIRED' });
+  }
+
+  const [updatedTrip] = await prisma.$transaction([
+    prisma.trip.update({
+      where: { id: tripId },
+      data: { status: 'DISPATCHED', startDate: new Date() },
+      include: { vehicle: true, driver: true }
+    }),
+    prisma.vehicle.update({ where: { id: trip.vehicleId }, data: { status: 'ON_TRIP' } }),
+    prisma.driver.update({  where: { id: trip.driverId  }, data: { status: 'ON_DUTY' } }),
+  ]);
+
+  res.json({ message: 'Draft dispatched successfully', trip: updatedTrip });
+});
+
 // PATCH /api/trips/:id/complete
 const complete = asyncHandler(async (req, res) => {
   const { finalOdometer } = req.body;
@@ -123,6 +161,7 @@ const complete = asyncHandler(async (req, res) => {
   if (!trip) return res.status(404).json({ error: 'Trip not found' });
   if (trip.status === 'COMPLETED') return res.status(400).json({ error: 'Trip is already completed' });
   if (trip.status === 'CANCELLED') return res.status(400).json({ error: 'Cannot complete a cancelled trip' });
+  if (trip.status !== 'DISPATCHED') return res.status(400).json({ error: 'Only DISPATCHED trips can be completed' });
 
   if (finalOdometer !== undefined && Number(finalOdometer) < trip.vehicle.odometer) {
     return res.status(400).json({ error: 'Final odometer cannot be less than current odometer' });
@@ -168,4 +207,4 @@ const cancel = asyncHandler(async (req, res) => {
   res.json({ message: 'Trip cancelled successfully' });
 });
 
-module.exports = { getAll, getOne, createDraft, dispatch, complete, cancel };
+module.exports = { getAll, getOne, createDraft, dispatch, dispatchDraft, complete, cancel };

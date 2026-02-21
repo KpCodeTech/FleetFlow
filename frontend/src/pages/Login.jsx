@@ -118,16 +118,6 @@ export default function Login() {
             </div>
           </form>
 
-          <div style={{ marginTop: '1.25rem', padding: '0.875rem', backgroundColor: 'var(--bg-surface)', borderRadius: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            <strong style={{ color: 'var(--text-secondary)' }}>Demo accounts:</strong>
-            <div style={{ marginTop: '0.375rem', display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
-              <span>parth@fleetflow.com – Manager</span>
-              <span>pal@fleetflow.com – Dispatcher</span>
-              <span>yashvi@fleetflow.com – Safety Officer</span>
-              <span>jay@fleetflow.com – Finance</span>
-              <span style={{ color: 'var(--accent)', marginTop: '0.125rem' }}>Password: password123</span>
-            </div>
-          </div>
         </div>
       </div>
 

@@ -43,6 +43,15 @@ def get_summary(db: Session = Depends(get_db)):
 
     utilization_rate = round((active_vehicles / total_vehicles * 100) if total_vehicles else 0, 1)
 
+    # Dead stock count (Available + No trips in 14 days)
+    fourteen_days_ago = datetime.datetime.now() - datetime.timedelta(days=14)
+    dead_stock_query = db.query(Vehicle).filter(Vehicle.status == "AVAILABLE")
+    dead_stock_count = 0
+    for v in dead_stock_query.all():
+        last_trip = db.query(Trip).filter(Trip.vehicleId == v.id, Trip.status == TripStatus.COMPLETED).order_by(Trip.endDate.desc()).first()
+        if not last_trip or (last_trip.endDate and last_trip.endDate < fourteen_days_ago):
+            dead_stock_count += 1
+
     return {
         "fleet": {
             "total": total_vehicles,
@@ -50,6 +59,7 @@ def get_summary(db: Session = Depends(get_db)):
             "inShop": in_shop_vehicles,
             "available": available_vehicles,
             "utilizationRate": utilization_rate,
+            "deadStockCount": dead_stock_count,
         },
         "drivers": {
             "total": total_drivers,
@@ -107,6 +117,44 @@ def get_fuel_efficiency(db: Session = Depends(get_db)):
 
     results.sort(key=lambda x: x["kmPerLiter"] or 0, reverse=True)
     return results
+
+
+# ── GET /analytics/dead-stock ────────────────────────────────────────────────
+@router.get("/dead-stock")
+def get_dead_stock(db: Session = Depends(get_db)):
+    """
+    Find vehicles that are AVAILABLE but haven't been on a trip in 14+ days.
+    """
+    fourteen_days_ago = datetime.datetime.now() - datetime.timedelta(days=14)
+    available_vehicles = db.query(Vehicle).filter(Vehicle.status == "AVAILABLE").all()
+    
+    dead_stock = []
+    for v in available_vehicles:
+        last_trip = db.query(Trip).filter(
+            Trip.vehicleId == v.id,
+            Trip.status == TripStatus.COMPLETED
+        ).order_by(Trip.endDate.desc()).first()
+        
+        is_dead = False
+        days_idle = None
+        
+        if not last_trip:
+            is_dead = True
+            days_idle = 999 # never used
+        elif last_trip.endDate and last_trip.endDate < fourteen_days_ago:
+            is_dead = True
+            days_idle = (datetime.datetime.now() - last_trip.endDate).days
+            
+        if is_dead:
+            dead_stock.append({
+                "vehicleId":    v.id,
+                "nameModel":    v.nameModel,
+                "licensePlate": v.licensePlate,
+                "daysIdle":     days_idle,
+                "lastTripEnd":  last_trip.endDate if last_trip else None,
+            })
+            
+    return dead_stock
 
 
 # ── GET /analytics/vehicle-roi/{vehicle_id} ──────────────────────────────────
