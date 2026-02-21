@@ -37,6 +37,7 @@ def get_summary(db: Session = Depends(get_db)):
 
     completed_trips  = db.query(Trip).filter(Trip.status == TripStatus.COMPLETED).count()
     active_trips     = db.query(Trip).filter(Trip.status == TripStatus.DISPATCHED).count()
+    pending_cargo    = db.query(Trip).filter(Trip.status == TripStatus.DRAFT).count()
 
     avg_safety = db.query(func.avg(Driver.safetyScore)).scalar() or 0
 
@@ -64,6 +65,7 @@ def get_summary(db: Session = Depends(get_db)):
         "trips": {
             "completed": completed_trips,
             "active": active_trips,
+            "pendingCargo": pending_cargo,
         },
     }
 
@@ -210,9 +212,104 @@ def export_fleet_audit(db: Session = Depends(get_db)):
             trips_count, avg_score,
         ])
 
+
     output.seek(0)
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=fleetflow_audit.csv"},
+    )
+
+
+# ── GET /analytics/export-pdf ─────────────────────────────────────────────────
+@router.get("/export-pdf")
+def export_fleet_pdf(db: Session = Depends(get_db)):
+    """
+    Generate and return a downloadable PDF fleet health & financial audit report.
+    """
+    vehicles = db.query(Vehicle).all()
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf,
+        pagesize=landscape(A4),
+        rightMargin=1.5*cm, leftMargin=1.5*cm,
+        topMargin=1.5*cm, bottomMargin=1.5*cm,
+    )
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('title', fontSize=16, fontName='Helvetica-Bold',
+                                 alignment=TA_CENTER, spaceAfter=6)
+    sub_style   = ParagraphStyle('sub', fontSize=9, fontName='Helvetica',
+                                 alignment=TA_CENTER, textColor=colors.grey, spaceAfter=12)
+
+    elements = [
+        Paragraph("FleetFlow — Fleet Audit Report", title_style),
+        Paragraph(f"Generated on {datetime.date.today().strftime('%d %B %Y')}", sub_style),
+        Spacer(1, 0.3*cm),
+    ]
+
+    # Table header
+    header = ["Vehicle", "Plate", "Status", "Odo (km)", "Acq. Cost (₹)",
+              "Revenue (₹)", "Maint. (₹)", "Fuel (₹)", "Net Profit (₹)", "ROI %"]
+    table_data = [header]
+
+    total_rev = total_maint = total_fuel = total_net = 0
+
+    for v in vehicles:
+        d = _compute_roi(v.id, v, db)
+        table_data.append([
+            v.nameModel, v.licensePlate, v.status,
+            f"{v.odometer:,.0f}",
+            f"{v.acquisitionCost:,.0f}",
+            f"{d['totalRevenue']:,.0f}",
+            f"{d['totalMaintenanceCost']:,.0f}",
+            f"{d['totalFuelCost']:,.0f}",
+            f"{d['netProfit']:,.0f}",
+            f"{d['roiPercent']:.2f}%",
+        ])
+        total_rev   += d['totalRevenue']
+        total_maint += d['totalMaintenanceCost']
+        total_fuel  += d['totalFuelCost']
+        total_net   += d['netProfit']
+
+    # Totals row
+    table_data.append([
+        "TOTALS", "", "", "", "",
+        f"{total_rev:,.0f}",
+        f"{total_maint:,.0f}",
+        f"{total_fuel:,.0f}",
+        f"{total_net:,.0f}", "",
+    ])
+
+    col_widths = [4.5*cm, 2.8*cm, 2.2*cm, 2.2*cm, 3.0*cm, 3.0*cm, 2.8*cm, 2.8*cm, 3.0*cm, 2.0*cm]
+    t = Table(table_data, colWidths=col_widths, repeatRows=1)
+
+    t.setStyle(TableStyle([
+        # Header
+        ('BACKGROUND',   (0, 0), (-1, 0), colors.HexColor('#161b22')),
+        ('TEXTCOLOR',    (0, 0), (-1, 0), colors.HexColor('#58a6ff')),
+        ('FONTNAME',     (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE',     (0, 0), (-1, 0), 8),
+        ('ALIGN',        (0, 0), (-1, 0), 'CENTER'),
+        # Body
+        ('FONTSIZE',     (0, 1), (-1, -2), 8),
+        ('ALIGN',        (3, 1), (-1, -2), 'RIGHT'),
+        ('TEXTCOLOR',    (0, 1), (-1, -2), colors.HexColor('#e6edf3')),
+        ('BACKGROUND',   (0, 1), (-1, -2), colors.HexColor('#0d1117')),
+        ('ROWBACKGROUNDS',(0, 1), (-1, -2), [colors.HexColor('#0d1117'), colors.HexColor('#1c2333')]),
+        ('GRID',         (0, 0), (-1, -1), 0.25, colors.HexColor('#30363d')),
+        # Totals row
+        ('BACKGROUND',   (0, -1), (-1, -1), colors.HexColor('#21262d')),
+        ('FONTNAME',     (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('TEXTCOLOR',    (0, -1), (-1, -1), colors.HexColor('#e3b341')),
+        ('FONTSIZE',     (0, -1), (-1, -1), 8),
+        ('ALIGN',        (3, -1), (-1, -1), 'RIGHT'),
+    ]))
+    elements.append(t)
+    doc.build(elements)
+
+    buf.seek(0)
+    return StreamingResponse(
+        buf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=fleetflow_audit_{datetime.date.today()}.pdf"},
     )

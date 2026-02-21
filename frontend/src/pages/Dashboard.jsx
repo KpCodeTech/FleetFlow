@@ -33,6 +33,7 @@ export default function Dashboard() {
   const fleet = summary?.fleet || {};
   const fin   = summary?.financials || {};
   const drv   = summary?.drivers || {};
+  const trp   = summary?.trips || {};
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60%', color: 'var(--text-muted)' }}>
@@ -45,27 +46,27 @@ export default function Dashboard() {
       {/* KPI Row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
         <StatCard
-          icon={<Truck size={18} />} label="Total Fleet" value={fleet.total ?? '—'}
-          sub={`${fleet.available ?? 0} available`}
+          icon={<Truck size={18} />} label="Active Fleet" value={fleet.active ?? '—'}
+          sub={`${fleet.total ?? 0} total vehicles`}
           trend="up" trendText={`${fleet.utilizationRate ?? 0}% utilization`}
           accent="var(--accent)"
         />
         <StatCard
-          icon={<Activity size={18} />} label="Active Now" value={fleet.active ?? '—'}
-          sub={`${fleet.inShop ?? 0} in maintenance`}
+          icon={<Wrench size={18} />} label="Maintenance Alerts" value={fleet.inShop ?? '—'}
+          sub={`${fleet.available ?? 0} currently available`}
+          accent="var(--amber)"
+        />
+        <StatCard
+          icon={<Activity size={18} />} label="Utilization Rate" value={`${fleet.utilizationRate ?? 0}%`}
+          sub={`${drv.onDuty ?? 0} drivers on duty`}
+          trend={fleet.utilizationRate >= 50 ? 'up' : 'down'}
+          trendText={`Avg safety: ${drv.avgSafetyScore ?? '—'}`}
           accent="var(--green)"
         />
         <StatCard
-          icon={<Users size={18} />} label="Drivers On Duty" value={drv.onDuty ?? '—'}
-          sub={`Avg safety: ${drv.avgSafetyScore ?? '—'}`}
+          icon={<Route size={18} />} label="Pending Cargo" value={trp.pendingCargo ?? '—'}
+          sub={`${trp.active ?? 0} dispatched · ${trp.completed ?? 0} completed`}
           accent="var(--purple)"
-        />
-        <StatCard
-          icon={<TrendingUp size={18} />} label="Net Revenue" value={fin.totalRevenue ? fmt(fin.totalRevenue) : '—'}
-          sub={`Costs: ${fin.totalFuelCost ? fmt(fin.totalFuelCost + (fin.totalMaintenanceCost || 0)) : '—'}`}
-          trend={fin.netProfit >= 0 ? 'up' : 'down'}
-          trendText={fin.netProfit ? `Net: ${fmt(fin.netProfit)}` : ''}
-          accent="var(--amber)"
         />
       </div>
 

@@ -1,28 +1,39 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Truck, Users, Route, Send,
-  Wrench, BarChart3, LogOut, Zap,
+  Wrench, BarChart3, LogOut, Zap, Fuel,
 } from 'lucide-react';
 
-const NAV_ITEMS = [
-  { to: '/',           label: 'Dashboard',   icon: LayoutDashboard, end: true },
-  { to: '/vehicles',   label: 'Vehicles',    icon: Truck },
-  { to: '/drivers',    label: 'Drivers',     icon: Users },
-  { to: '/trips',      label: 'Trips',       icon: Route },
-  { to: '/dispatch',   label: 'Dispatch',    icon: Send },
-  { to: '/maintenance',label: 'Maintenance', icon: Wrench },
-  { to: '/analytics',  label: 'Analytics',   icon: BarChart3 },
+const ALL_NAV_ITEMS = [
+  { to: '/',            label: 'Dashboard',   icon: LayoutDashboard, end: true,  roles: ['MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCE'] },
+  { to: '/vehicles',    label: 'Vehicles',    icon: Truck,                        roles: ['MANAGER', 'DISPATCHER', 'SAFETY_OFFICER'] },
+  { to: '/drivers',     label: 'Drivers',     icon: Users,                        roles: ['MANAGER', 'DISPATCHER', 'SAFETY_OFFICER'] },
+  { to: '/trips',       label: 'Trips',       icon: Route,                        roles: ['MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCE'] },
+  { to: '/dispatch',    label: 'Dispatch',    icon: Send,                         roles: ['MANAGER', 'DISPATCHER'] },
+  { to: '/maintenance', label: 'Maintenance', icon: Wrench,                       roles: ['MANAGER'] },
+  { to: '/expenses',    label: 'Fuel & Costs',icon: Fuel,                         roles: ['MANAGER', 'DISPATCHER', 'FINANCE'] },
+  { to: '/analytics',   label: 'Analytics',   icon: BarChart3,                    roles: ['MANAGER', 'FINANCE'] },
 ];
 
 export default function Sidebar() {
   const navigate  = useNavigate();
   const user      = JSON.parse(localStorage.getItem('fleetflow_user') || '{}');
 
+  const navItems = ALL_NAV_ITEMS.filter(item => item.roles.includes(user.role));
+
   const handleLogout = () => {
     localStorage.removeItem('fleetflow_token');
     localStorage.removeItem('fleetflow_user');
     navigate('/login');
   };
+
+  const roleBadgeColor = {
+    MANAGER:        { bg: 'rgba(88,166,255,0.15)',  color: '#58a6ff'  },
+    DISPATCHER:     { bg: 'rgba(63,185,80,0.15)',   color: '#3fb950'  },
+    SAFETY_OFFICER: { bg: 'rgba(227,179,65,0.15)',  color: '#e3b341'  },
+    FINANCE:        { bg: 'rgba(188,140,255,0.15)', color: '#bc8cff'  },
+  };
+  const badge = roleBadgeColor[user.role] || { bg: 'var(--bg-surface)', color: 'var(--text-muted)' };
 
   return (
     <aside style={{
@@ -61,7 +72,7 @@ export default function Sidebar() {
         <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 0.5rem 0.5rem' }}>
           Navigation
         </div>
-        {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
+        {navItems.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}
@@ -101,7 +112,7 @@ export default function Sidebar() {
 
       {/* User Footer */}
       <div style={{ padding: '0.875rem 1rem', borderTop: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.625rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.5rem' }}>
           <div style={{
             width: '32px', height: '32px', borderRadius: '50%',
             background: 'linear-gradient(135deg, var(--purple), var(--accent))',
@@ -111,11 +122,15 @@ export default function Sidebar() {
           }}>
             {user?.name?.charAt(0) || 'U'}
           </div>
-          <div style={{ overflow: 'hidden' }}>
+          <div style={{ overflow: 'hidden', flex: 1 }}>
             <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {user?.name || 'User'}
             </div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+            <div style={{
+              display: 'inline-block', fontSize: '0.65rem', fontWeight: 600,
+              padding: '0.1rem 0.4rem', borderRadius: '4px', marginTop: '0.125rem',
+              background: badge.bg, color: badge.color,
+            }}>
               {user?.role?.replace('_', ' ') || 'Guest'}
             </div>
           </div>

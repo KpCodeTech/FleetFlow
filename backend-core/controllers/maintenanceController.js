@@ -30,6 +30,14 @@ const create = asyncHandler(async (req, res) => {
   const vehicle = await prisma.vehicle.findUnique({ where: { id: Number(vehicleId) } });
   if (!vehicle) return res.status(404).json({ error: 'Vehicle not found' });
 
+  // Guard: cannot send a vehicle that is currently ON_TRIP to the shop
+  if (vehicle.status === 'ON_TRIP') {
+    return res.status(400).json({
+      error: `Vehicle "${vehicle.nameModel}" is currently ON_TRIP. Complete or cancel the active trip before logging maintenance.`,
+      code: 'VEHICLE_ON_TRIP',
+    });
+  }
+
   const [log] = await prisma.$transaction([
     prisma.maintenanceLog.create({
       data: {

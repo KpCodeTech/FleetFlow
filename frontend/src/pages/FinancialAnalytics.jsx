@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Download, RefreshCw, TrendingUp, Fuel, BarChart3 } from 'lucide-react';
+import { Download, FileText, RefreshCw, TrendingUp, Fuel, BarChart3 } from 'lucide-react';
 import { analyticsApi } from '../lib/api';
 
 const fmt   = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n ?? 0);
 const pct   = (n) => `${n != null ? n.toFixed(2) : '—'}%`;
 
 export default function FinancialAnalytics() {
-  const [roiData,  setRoiData]  = useState([]);
-  const [fuelData, setFuelData] = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState('');
+  const [roiData,  setRoiData]   = useState([]);
+  const [fuelData, setFuelData]  = useState([]);
+  const [loading,  setLoading]   = useState(true);
+  const [error,    setError]     = useState('');
   const [exporting, setExporting] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const load = async () => {
     setLoading(true); setError('');
@@ -42,6 +43,21 @@ export default function FinancialAnalytics() {
     finally { setExporting(false); }
   };
 
+  const handleExportPdf = async () => {
+    setExportingPdf(true);
+    try {
+      const res  = await analyticsApi.get('/analytics/export-pdf', { responseType: 'blob' });
+      const url  = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href  = url;
+      link.setAttribute('download', `fleetflow_audit_${new Date().toISOString().split('T')[0]}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch { alert('PDF export failed. Is the analytics API running?'); }
+    finally { setExportingPdf(false); }
+  };
+
   const totalRevenue = roiData.reduce((s, r) => s + (r.totalRevenue || 0), 0);
   const totalCosts   = roiData.reduce((s, r) => s + (r.totalCosts   || 0), 0);
   const totalProfit  = roiData.reduce((s, r) => s + (r.netProfit    || 0), 0);
@@ -55,8 +71,11 @@ export default function FinancialAnalytics() {
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button className="btn-ghost" onClick={load}><RefreshCw size={15} />Refresh</button>
-          <button className="btn-primary" onClick={handleExport} disabled={exporting}>
-            <Download size={15} />{exporting ? 'Exporting...' : 'Export CSV'}
+          <button className="btn-ghost" onClick={handleExport} disabled={exporting}>
+            <Download size={15} />{exporting ? 'Exporting...' : 'CSV'}
+          </button>
+          <button className="btn-primary" onClick={handleExportPdf} disabled={exportingPdf}>
+            <FileText size={15} />{exportingPdf ? 'Generating...' : 'Export PDF'}
           </button>
         </div>
       </div>

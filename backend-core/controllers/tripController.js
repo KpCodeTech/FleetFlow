@@ -145,13 +145,18 @@ const cancel = asyncHandler(async (req, res) => {
   const trip = await prisma.trip.findUnique({ where: { id: tripId } });
   if (!trip) return res.status(404).json({ error: 'Trip not found' });
   if (trip.status === 'COMPLETED') return res.status(400).json({ error: 'Cannot cancel a completed trip' });
+  if (trip.status === 'CANCELLED') return res.status(400).json({ error: 'Trip is already cancelled' });
 
-  await prisma.$transaction([
+  // Only release vehicle/driver if trip was actually DISPATCHED (they are ON_TRIP/ON_DUTY)
+  const ops = [
     prisma.trip.update({ where: { id: tripId }, data: { status: 'CANCELLED' } }),
-    prisma.vehicle.update({ where: { id: trip.vehicleId }, data: { status: 'AVAILABLE' } }),
-    prisma.driver.update({ where: { id: trip.driverId }, data: { status: 'AVAILABLE' } }),
-  ]);
+  ];
+  if (trip.status === 'DISPATCHED') {
+    ops.push(prisma.vehicle.update({ where: { id: trip.vehicleId }, data: { status: 'AVAILABLE' } }));
+    ops.push(prisma.driver.update({ where: { id: trip.driverId }, data: { status: 'AVAILABLE' } }));
+  }
 
+  await prisma.$transaction(ops);
   res.json({ message: 'Trip cancelled successfully' });
 });
 
