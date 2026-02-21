@@ -233,6 +233,41 @@ export default function FinancialAnalytics() {
                   </table>
                 </div>
               </div>
+
+              {/* Fuel Efficiency Table (Restored) */}
+              <div className="card" style={{ padding: '0 1.25rem' }}>
+                <div style={{ padding: '1rem 0', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Fuel size={16} style={{ color: 'var(--amber)' }} />
+                  <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Detailed Fuel Efficiency</span>
+                </div>
+                <div style={{ overflowY: 'auto' }}>
+                  <table className="data-table">
+                    <thead><tr><th>Vehicle</th><th>Fuel Used</th><th>Fuel Cost</th><th>km/L</th></tr></thead>
+                    <tbody>
+                      {fuelData.length === 0 ? (
+                        <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No fuel data</td></tr>
+                      ) : fuelData.map((f) => (
+                        <tr key={f.vehicleId}>
+                          <td>
+                            <div style={{ fontWeight: 600, fontSize: '0.8125rem' }}>{f.nameModel}</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>{f.licensePlate}</div>
+                          </td>
+                          <td style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>{f.totalFuelLiters} L</td>
+                          <td style={{ color: 'var(--amber)', fontSize: '0.8125rem' }}>{fmt(f.totalFuelCost)}</td>
+                          <td>
+                            <span style={{ 
+                              fontWeight: 700, fontSize: '0.8125rem',
+                              color: f.kmPerLiter ? (f.kmPerLiter >= 12 ? 'var(--green)' : f.kmPerLiter >= 8 ? 'var(--amber)' : 'var(--red)') : 'var(--text-muted)' 
+                            }}>
+                              {f.kmPerLiter != null ? `${f.kmPerLiter} km/L` : '—'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
 
             {/* Sidebar Alerts & Report Center */}
